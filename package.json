@@ -12,6 +12,8 @@
   "dependencies": {
     "better-sqlite3": "^9.6.0",
     "nuxt": "^3.13.2",
+    "sass": "^1.80.6",
+    "sass-embedded": "^1.80.6",
     "sqlite3": "^5.1.7",
     "vue": "latest",
     "vue-router": "latest"

@@ -17,9 +17,6 @@ export default defineEventHandler((event) => {
 
 const stmt = db.prepare(sql).all();
 
-console.log(stmt)
-
-
   // Group songs by album
   const groupedAlbums = stmt.reduce((acc, row) => {
     const { albumId, albumTitle, artistName } = row;
