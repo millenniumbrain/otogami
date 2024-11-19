@@ -61,6 +61,7 @@ def reset_database(db_name="music_library.db"):
         GenreID INTEGER,
         Duration INTEGER NOT NULL,
         ReleaseDate TEXT,
+        TrackNumber INTEGER,
         FOREIGN KEY (ArtistID) REFERENCES Artists(ArtistID) ON DELETE SET NULL,
         FOREIGN KEY (AlbumID) REFERENCES Albums(AlbumID) ON DELETE SET NULL,
         FOREIGN KEY (GenreID) REFERENCES Genres(GenreID) ON DELETE SET NULL
@@ -113,19 +114,29 @@ def extract_metadata(file_path):
         "duration": int(audio.info.length) if audio.info else 0,
         "file_type": SUPPORTED_FORMATS[file_extension],
         "file_size": os.path.getsize(file_path),
-        "file_path": os.path.abspath(file_path).replace("\\", "/")  # Convert to absolute path with forward slashes
+        "file_path": os.path.abspath(file_path).replace("\\", "/"),  # Convert to absolute path with forward slashes
+        "track_number": None
     }
 
     # Extract metadata for specific formats
     if file_extension == ".mp3" and isinstance(audio, MP3):
         metadata["title"] = audio.get("TIT2", metadata["title"])
         metadata["artist"] = audio.get("TPE1", metadata["artist"])
+        metadata["track_number"] = audio.get("TRCK", [""])[0].split("/")[0]
     elif file_extension == ".flac" and isinstance(audio, FLAC):
         metadata["title"] = audio.get("title", [metadata["title"]])[0]
         metadata["artist"] = audio.get("artist", [metadata["artist"]])[0]
+        metadata["track_number"] = audio.get("tracknumber", [""])[0]
     elif file_extension == ".ogg" and isinstance(audio, OggVorbis):
         metadata["title"] = audio.get("title", [metadata["title"]])[0]
         metadata["artist"] = audio.get("artist", [metadata["artist"]])[0]
+        metadata["track_number"] = audio.get("tracknumber", [""])[0]
+
+    # Convert track number to integer if possible
+    try:
+        metadata["track_number"] = int(metadata["track_number"])
+    except (ValueError, TypeError):
+        metadata["track_number"] = None
 
     return metadata
 
@@ -156,6 +167,7 @@ def populate_database(directory_path, db_name="music_library.db"):
                         print(f"    - Artist: {metadata['artist']}")
                         print(f"    - Title: {metadata['title']}")
                         print(f"    - Duration: {metadata['duration']} seconds")
+                        print(f"    - Track Number: {metadata['track_number']}")
                         print(f"    - File Type: {metadata['file_type']}")
                         print(f"    - File Size: {metadata['file_size']} bytes")
                         print(f"    - File Path: {metadata['file_path']}")
@@ -186,9 +198,9 @@ def populate_database(directory_path, db_name="music_library.db"):
 
                         # Insert song
                         cursor.execute('''
-                        INSERT INTO Songs (Title, ArtistID, AlbumID, Duration)
-                        VALUES (?, ?, ?, ?)
-                        ''', (metadata["title"], artist_id, album_id, metadata["duration"]))
+                        INSERT INTO Songs (Title, ArtistID, AlbumID, Duration, TrackNumber)
+                        VALUES (?, ?, ?, ?, ?)
+                        ''', (metadata["title"], artist_id, album_id, metadata["duration"], metadata["track_number"]))
                         song_id = cursor.lastrowid
 
                         # Insert song file details

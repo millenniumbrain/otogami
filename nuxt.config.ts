@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/scss/theme.scss'],
   srcDir: 'app/',
+
   ignore: [
     "./*",
     "!./app/**"
@@ -16,5 +17,10 @@ export default defineNuxtConfig({
         }
       }
     }
+  },
+  ssr: false,
+  modules: ['@pinia/nuxt'],
+  pinia: {
+    storesDirs: ['./app/stores/**']
   }
 })
